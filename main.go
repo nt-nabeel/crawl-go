@@ -54,8 +54,8 @@ func CrawlLink(url string) []Link {
 			}
 			if attribute.Key == "src" {
 				nameSlice := strings.Split(attribute.Val, ".")
-				isApp := strings.HasSuffix(nameSlice[0], "app")
-				if isApp {
+				isAppFileJS := strings.HasSuffix(nameSlice[0], "app")
+				if isAppFileJS {
 					links = getLinkFromJS(url+attribute.Val, links)
 				}
 			}
@@ -66,6 +66,7 @@ func CrawlLink(url string) []Link {
 }
 
 func getLinkFromJS(url string, links []Link) []Link {
+	// request to file js
 	response, err := http.Get(url)
 	if err != nil {
 		fmt.Println("Error")
@@ -76,19 +77,25 @@ func getLinkFromJS(url string, links []Link) []Link {
 		fmt.Println("Error")
 		panic(err.Error)
 	}
+
+	// split body
 	data := strings.Split(string(body), ";")
 	for _, c := range data {
+		// links= is var links
 		if len(strings.Split(c, "links=")) == 2 {
 			_links := strings.Split(c, "links=")[1]
 			_links = _links[2:(len(_links) - 2)]
+			// split array to object array
+			// result []string = url:"url", title="title"
 			linkObj := strings.Split(_links, "},{")
 			for _, _link := range linkObj {
-				_link = _link[5:]
+				_link = _link[5:] // set string after url:"
 				_data := strings.Split(_link, `",title:"`)
+				// result finale []string = [url, title"]
 
 				var link Link
 				link.url = _data[0]
-				link.title = _data[1][:(len(_data[1]) - 1)]
+				link.title = _data[1][:(len(_data[1]) - 1)] // remove double quote
 				links = append(links, link)
 			}
 		}
